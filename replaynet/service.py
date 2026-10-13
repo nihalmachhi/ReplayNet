@@ -37,6 +37,42 @@ class ReplayService:
         self.store.insert("bundles", identifier, {"events": events}, created, digest)
         return self.store.get("bundles", identifier)
 
+    def hypotheses(self):
+        hypotheses = []
+        rules = {
+            "route-change-loss": (
+                "routing-update",
+                "packet-loss",
+                "Route change coincides with packet loss",
+            ),
+            "mtu-blackhole": (
+                "icmp-too-big",
+                "retransmission",
+                "Path MTU signal coincides with retransmission",
+            ),
+        }
+        for bundle in self.store.list("bundles"):
+            by_kind = {}
+            for event in bundle["events"]:
+                by_kind.setdefault(event["kind"], []).append(event["id"])
+            for identifier, (first, second, title) in rules.items():
+                evidence = by_kind.get(first, []) + by_kind.get(second, [])
+                if by_kind.get(first) and by_kind.get(second):
+                    hypotheses.append(
+                        {
+                            "id": f"{bundle['id']}:{identifier}",
+                            "bundle_id": bundle["id"],
+                            "rule": identifier,
+                            "title": title,
+                            "supporting_event_ids": evidence,
+                            "method": "event-kind co-occurrence heuristic; not a calibrated probability",
+                        }
+                    )
+        return hypotheses
+
+    def save_decision(self, hypothesis_id: str, decision: dict):
+        return self.store.save_decision(hypothesis_id, decision)
+
     def create_spec(self, spec: ScenarioSpec):
         identifier, created = str(uuid4()), now()
         self.store.insert("specs", identifier, spec.model_dump(), created)

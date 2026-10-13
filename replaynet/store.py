@@ -1,6 +1,8 @@
 import json
 import sqlite3
+from datetime import UTC, datetime
 from pathlib import Path
+from uuid import uuid4
 
 
 class Store:
@@ -13,6 +15,7 @@ class Store:
                 CREATE TABLE IF NOT EXISTS bundles (id TEXT PRIMARY KEY, sha256 TEXT, payload TEXT, created_at TEXT);
                 CREATE TABLE IF NOT EXISTS specs (id TEXT PRIMARY KEY, payload TEXT, created_at TEXT);
                 CREATE TABLE IF NOT EXISTS runs (id TEXT PRIMARY KEY, payload TEXT, created_at TEXT);
+                CREATE TABLE IF NOT EXISTS hypothesis_decisions (id TEXT PRIMARY KEY, hypothesis_id TEXT, payload TEXT, created_at TEXT);
             """)
 
     def connect(self):
@@ -47,6 +50,16 @@ class Store:
         if table == "bundles":
             result["sha256"] = row["sha256"]
         return result
+
+    def save_decision(self, hypothesis_id: str, payload: dict):
+        identifier = str(uuid4())
+        created = datetime.now(UTC).isoformat()
+        with self.connect() as db:
+            db.execute(
+                "INSERT INTO hypothesis_decisions VALUES (?, ?, ?, ?)",
+                (identifier, hypothesis_id, json.dumps(payload), created),
+            )
+        return {"id": identifier, "hypothesis_id": hypothesis_id, **payload, "created_at": created}
 
     def list(self, table: str):
         if table not in {"bundles", "specs", "runs"}:

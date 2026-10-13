@@ -1,6 +1,10 @@
 import os
 from dataclasses import dataclass
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 
 @dataclass(frozen=True)
 class Settings:
@@ -9,3 +13,6 @@ class Settings:
     operator_token: str = os.getenv("REPLAYNET_OPERATOR_TOKEN", "local-operator-token")
     admin_token: str = os.getenv("REPLAYNET_ADMIN_TOKEN", "local-admin-token")
     max_bundle_bytes: int = 5 * 1024 * 1024
+
+
+

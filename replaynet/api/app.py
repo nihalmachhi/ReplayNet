@@ -50,14 +50,7 @@ def create_app(database_path: str | None = None):
 
     @app.get("/api/v1/hypotheses")
     def hypotheses(_: Role = Depends(require_role(Role.viewer))):
-        return [
-            {
-                "id": "route-change-loss",
-                "title": "Route change caused packet loss",
-                "confidence": 0.72,
-            },
-            {"id": "mtu-blackhole", "title": "Path MTU discovery failed", "confidence": 0.58},
-        ]
+        return service.hypotheses()
 
     @app.patch("/api/v1/hypotheses/{hypothesis_id}")
     def decide(
@@ -65,7 +58,9 @@ def create_app(database_path: str | None = None):
         decision: HypothesisDecision,
         _: Role = Depends(require_role(Role.operator)),
     ):
-        return {"id": hypothesis_id, **decision.model_dump()}
+        if not any(item["id"] == hypothesis_id for item in service.hypotheses()):
+            raise HTTPException(404, "Hypothesis not found")
+        return store.save_decision(hypothesis_id, decision.model_dump())
 
     @app.post("/api/v1/specs", status_code=201)
     def create(spec: ScenarioSpec, _: Role = Depends(require_role(Role.operator))):
