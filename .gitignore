@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.env
+.env.*
+!.env.example
+data/
+*.pcap
+*.pcapng
+output/reports/*.json
+!output/reports/.gitkeep
+dashboard/node_modules/
+dashboard/dist/
+dashboard/*.tsbuildinfo
+
