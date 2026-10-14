@@ -33,19 +33,3 @@ npm run dev
 
 The example tokens are for local demonstration only. Replace them in .env with unique random values. Viewer reads; operator can ingest evidence and create/run scenarios; admin inherits those permissions. Dashboard reads from the local API using its token field.
 
-Example evidence upload:
-
-~~~powershell
-$headers = @{ Authorization = 'Bearer local-operator-token' }
-Invoke-RestMethod -Uri http://127.0.0.1:8000/api/v1/bundles -Method Post -Headers $headers -Form @{ file = Get-Item .\fixtures\incidents\route-change.jsonl }
-~~~
-
-## Verify
-
-~~~powershell
-uv run pytest
-npm --prefix dashboard run build
-~~~
-
-SQLite is stored in ignored data/. Avoid loading sensitive live evidence until your redaction and retention needs have been reviewed.
-
