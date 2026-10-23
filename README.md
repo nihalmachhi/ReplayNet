@@ -37,35 +37,6 @@ Network incidents are painful in a very specific way:
 - **Less guesswork when debugging.** The reducer points at which parameters drive the failure, so you start from a short list rather than the whole config.
 - **Access control from day one.** Every API route except health is behind viewer / operator / admin checks.
 
-## Architecture
-
-```
-  incident.jsonl
-        |
-        v
-  +-------------+     +--------------+     +-----------------+
-  |  Ingestion  | --> |  Sanitizer   | --> | UTC timeline +  |
-  |  (offline)  |     |  (redaction) |     | SHA-256 digest  |
-  +-------------+     +--------------+     +--------+--------+
-                                                    |
-                                                    v
-                                           +-----------------+
-                                           |  SQLite (data/) |
-                                           +--------+--------+
-                                                    |
-                    +-------------------------------+
-                    v
-        +------------------------+      +-----------------------+
-        |  Scenario + seeded     | ---> |  Wilson 95% CI +      |
-        |  deterministic runner  |      |  parameter reducer    |
-        +------------------------+      +-----------+-----------+
-                                                    |
-                                        REST API (role-checked)
-                                                    |
-                                                    v
-                                          React dashboard
-```
-
 ## Project layout
 
 ```
@@ -79,6 +50,25 @@ ReplayNet/
 ├── .env.example          # Local config template
 └── pyproject.toml        # Python project config (managed with uv)
 ```
+
+## Architecture and how it works
+
+ReplayNet converts sanitized incident evidence into a repeatable scenario and estimates its pass rate across deterministic seeded runs.
+
+```mermaid
+flowchart LR
+  A[JSONL incident evidence] --> B[Redact before persistence]
+  B --> C[Normalize timestamps to UTC]
+  C --> D[Fingerprint and store in SQLite]
+  D --> E[Scenario with fixed seed]
+  E --> F[Repeated in-process simulation]
+  F --> G[Pass rate and Wilson 95% interval]
+  F --> H[Parameter reducer]
+  G --> I[Role-checked API and React dashboard]
+  H --> I
+```
+
+The simulation never captures packets or changes a live network. Fixed seeds make runs reproducible; confidence intervals describe the configured simulator, not production reliability. Evidence is stored locally after the supported redaction pass.
 
 ## Getting started
 
@@ -152,3 +142,5 @@ ReplayNet is honest about what it is and isn't, and you should be too when you u
 ## Author
 
 **Nihal Machhi** · [GitHub](https://github.com/nihalmachhi)
+
+
