@@ -2,7 +2,7 @@
   <img src="assets/readme-icon.png" alt="ReplayNet icon" width="112" />
 </p>
 
-<h1 align="center">ReplayNet</h1>
+<h1 align="center">ReplayNet</h1>
 
 **Turn network incidents into repeatable, measurable regression tests.**
 
