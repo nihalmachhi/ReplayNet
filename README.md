@@ -60,16 +60,19 @@ ReplayNet/
 ReplayNet converts sanitized incident evidence into a repeatable scenario and estimates its pass rate across deterministic seeded runs.
 
 ```mermaid
-flowchart LR
-  A[JSONL incident evidence] --> B[Redact before persistence]
+flowchart TD
+  A[Sanitized incident JSONL] --> B[Redact supported sensitive fields]
   B --> C[Normalize timestamps to UTC]
-  C --> D[Fingerprint and store in SQLite]
-  D --> E[Scenario with fixed seed]
-  E --> F[Repeated in-process simulation]
-  F --> G[Pass rate and Wilson 95% interval]
-  F --> H[Parameter reducer]
-  G --> I[Role-checked API and React dashboard]
-  H --> I
+  C --> D[Validate and fingerprint evidence]
+  D --> E[(SQLite evidence store)]
+  E --> F[Build deterministic scenario]
+  F --> G[Run repeated seeded simulations]
+  G --> H[Pass rate and Wilson 95% interval]
+  G --> I[Parameter reducer]
+  H --> J[Role-checked API]
+  I --> J
+  J --> K[React dashboard and reports]
+  G -. local simulation only .-> L[No live network changes]
 ```
 
 The simulation never captures packets or changes a live network. Fixed seeds make runs reproducible; confidence intervals describe the configured simulator, not production reliability. Evidence is stored locally after the supported redaction pass.
