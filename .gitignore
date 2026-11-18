@@ -13,5 +13,8 @@ output/reports/*.json
 !output/reports/.gitkeep
 dashboard/node_modules/
 dashboard/dist/
+dashboard/coverage/
+dashboard/playwright-report/
+dashboard/test-results/
 dashboard/*.tsbuildinfo
 

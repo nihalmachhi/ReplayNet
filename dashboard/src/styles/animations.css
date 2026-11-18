@@ -1,0 +1,143 @@
+.rise {
+  opacity: 0;
+  transform: translateY(6px);
+  animation: rise 0.5s var(--e, ease) forwards;
+  animation-delay: calc(var(--i, 0) * 0.38s + 0.15s);
+}
+.hero.hold .bar,
+.hero.hold .rise,
+.hero.hold .grow,
+.hero.hold .v s,
+.hero.hold .v b {
+  animation-play-state: paused;
+}
+
+.rv-wrap.arm .rv {
+  opacity: 0;
+  transform: translateY(16px);
+  filter: blur(8px);
+  transition:
+    opacity 0.7s ease,
+    transform 0.7s ease,
+    filter 0.7s ease;
+  transition-delay: calc(var(--r) * 0.15s);
+}
+.rv-wrap.arm.in .rv {
+  opacity: 1;
+  transform: none;
+  filter: none;
+}
+
+.pulse {
+  animation: pls 2s ease-in-out infinite;
+}
+
+@keyframes fill {
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes rise {
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes out {
+  to {
+    opacity: 0;
+    filter: blur(4px);
+  }
+}
+@keyframes grow {
+  to {
+    width: var(--w);
+  }
+}
+@keyframes dash {
+  to {
+    stroke-dashoffset: -16;
+  }
+}
+@keyframes hub {
+  50% {
+    stroke: #c4a1ff;
+    filter: drop-shadow(0 0 8px #8b5cf688);
+  }
+}
+@keyframes lit {
+  0%,
+  100% {
+    stroke: #242428;
+  }
+  35% {
+    stroke: #4ade9a;
+  }
+}
+@keyframes litb {
+  0%,
+  100% {
+    stroke: #242428;
+  }
+  35% {
+    stroke: #ff7a45;
+  }
+}
+@keyframes stl {
+  0%,
+  16%,
+  100% {
+    stroke: #242428;
+    fill: #19191c;
+  }
+  6% {
+    stroke: #a78bfa;
+    fill: #211d2e;
+  }
+}
+@keyframes stlb {
+  0%,
+  16%,
+  100% {
+    stroke: #242428;
+    fill: #19191c;
+  }
+  6% {
+    stroke: #ff7a45;
+    fill: #2a1d17;
+  }
+}
+@keyframes pls {
+  50% {
+    box-shadow: 0 0 0 6px #ef444433;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flow *,
+  .pulse {
+    animation: none !important;
+  }
+  .flow circle {
+    display: none;
+  }
+  .rv-wrap.arm .rv {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    transition: none;
+  }
+  .rise,
+  .v s,
+  .v b,
+  .grow {
+    animation-duration: 0.01s;
+    animation-delay: 0s;
+  }
+  .cv {
+    transition: none;
+  }
+  .bar {
+    display: none;
+  }
+}

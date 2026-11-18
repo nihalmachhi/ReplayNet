@@ -8,6 +8,22 @@
 
 ReplayNet takes sanitized evidence from a network incident, builds a clean timeline out of it, and lets you replay the failure as a deterministic scenario, run it many times with fixed seeds, and put a confidence interval on the result. The point is simple: after an outage, you should be able to *prove* your fix works, not just hope it does.
 
+<p align="center">
+  <a href="https://nihalmachhi.github.io/ReplayNet/"><strong>Live demo</strong></a>
+  ·
+  <a href="dashboard/docs/LEARN.md">Learn</a>
+  ·
+  <a href="dashboard/docs/DECISIONS.md">Decisions</a>
+  ·
+  <a href="dashboard/docs/BACKEND-NOTES.md">Backend notes</a>
+</p>
+
+<p align="center">
+  <img src="dashboard/e2e/visual.spec.ts-snapshots/home-desktop-chromium-win32.png" alt="ReplayNet dashboard showing the hero tour, seeded simulator and Wilson interval results" width="880" />
+</p>
+
+> The demo site is a self-contained React build. It computes every number in the browser from synthetic fixtures and never calls the API, captures traffic or touches a network device.
+
 ---
 
 ## The problem
@@ -46,11 +62,11 @@ Network incidents are painful in a very specific way:
 ```
 ReplayNet/
 ├── replaynet/            # API, ingestion, sanitizer, simulator, reducer
-├── dashboard/            # React dashboard (bundle listing)
+├── dashboard/            # React demo site (see dashboard/docs/)
 ├── fixtures/incidents/   # Sample incident evidence (e.g. route-change.jsonl)
 ├── output/reports/       # Generated reports
-├── docs/                 # Documentation
 ├── tests/                # pytest suite
+├── .github/workflows/    # CI and GitHub Pages deploy
 ├── .env.example          # Local config template
 └── pyproject.toml        # Python project config (managed with uv)
 ```
@@ -91,7 +107,9 @@ Interactive API docs: <http://127.0.0.1:8000/docs>
 
 ### 2. Dashboard
 
-In a second terminal:
+The dashboard is a standalone demo site. It does not call the API: every bundle,
+trial and interval is computed in the browser from the fixtures in
+`dashboard/src/data/fixtures.ts`, using a TypeScript port of the same engine.
 
 ```powershell
 cd ReplayNet\dashboard
@@ -99,14 +117,26 @@ npm install
 npm run dev
 ```
 
-Paste an API token into the token field in the dashboard to read bundles from the local API.
+Then open <http://127.0.0.1:5173/ReplayNet/>. To inspect a production build
+locally, run `npm run build` and `npm run preview`.
+
+Read `dashboard/docs/LEARN.md` for a guided tour of the code,
+`dashboard/docs/DECISIONS.md` for the design trade-offs, and
+`dashboard/docs/BACKEND-NOTES.md` for the gaps between the demo and the service.
 
 ### 3. Upload evidence
 
+The committed sample file ends with a blank line, which the API treats as an
+empty event and rejects with HTTP 422. Strip blank lines first:
+
 ```powershell
 $headers = @{ Authorization = 'Bearer local-operator-token' }
-Invoke-RestMethod -Uri http://127.0.0.1:8000/api/v1/bundles -Method Post -Headers $headers -Form @{ file = Get-Item .\fixtures\incidents\route-change.jsonl }
+$clean = Get-Content .\fixtures\incidents\route-change.jsonl | Where-Object { $_.Trim() }
+$clean | Set-Content .\route-change.clean.jsonl -Encoding utf8
+Invoke-RestMethod -Uri http://127.0.0.1:8000/api/v1/bundles -Method Post -Headers $headers -Form @{ file = Get-Item .\route-change.clean.jsonl }
 ```
+
+`dashboard/docs/BACKEND-NOTES.md` explains why, and suggests the one-line fix.
 
 ## Roles
 
@@ -121,9 +151,25 @@ Invoke-RestMethod -Uri http://127.0.0.1:8000/api/v1/bundles -Method Post -Header
 ## Testing
 
 ```bash
-uv run pytest
-npm --prefix dashboard run build
+# Backend
+uv sync --frozen --extra dev
+uv run ruff check .
+uv run pytest -q
+
+# Dashboard
+cd dashboard
+npm ci
+npm run lint
+npm run typecheck
+npm run test:coverage
+npm run build
+npx playwright test e2e/smoke.spec.ts
 ```
+
+The dashboard suite is 71 Vitest tests plus 9 Playwright smoke tests. Coverage is
+enforced at 80% lines/statements/functions and 75% branches. Visual baselines are
+captured on Windows and the visual spec skips on other platforms, so CI runs the
+smoke suite only.
 
 ## Safety boundary and limitations
 
@@ -134,13 +180,14 @@ ReplayNet is honest about what it is and isn't, and you should be too when you u
 - The reducer is a **single-pass simplification**, not full delta debugging.
 - Redaction covers secrets, email addresses and IPv4 strings. Other sensitive data (IPv6, hostnames, custom identifiers) is not covered yet.
 - Data is stored in SQLite under the git-ignored `data/` folder. Review your redaction and retention needs before loading sensitive live evidence.
+- The committed sample bundle ends with a blank line and is rejected with HTTP 422. Clean the file first; see `dashboard/docs/BACKEND-NOTES.md`.
 
 ## Roadmap
 
+- [x] Dashboard: hero tour, seeded simulator, timeline view, comparison table
 - [ ] IPv6 and hostname redaction
 - [ ] Full delta-debugging reducer
 - [ ] Scenario results exported to CI-friendly reports
-- [ ] Richer dashboard: timeline view, scenario runs, confidence interval charts
 - [ ] Pluggable evidence formats beyond JSONL
 
 ## Author
